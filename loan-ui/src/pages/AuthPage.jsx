@@ -21,10 +21,7 @@ export default function AuthPage({ onLogin }) {
     try {
       if (mode === "login") {
         await loginUser(form.email, form.password);
-        localStorage.setItem(
-          "loanUser",
-          JSON.stringify({ email: form.email, password: form.password }),
-        );
+
         // fetch role by registering a check — we store it after login
         const stored = {
           email: form.email,
