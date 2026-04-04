@@ -28,15 +28,14 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> {
                 })
-                .authenticationProvider(authenticationProvider()) // ✅ important
+                .authenticationProvider(authenticationProvider())
+
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/loans/**").hasRole("USER")
-                        .anyRequest().authenticated())
-                .httpBasic(httpBasic -> {
-                });
+                        .anyRequest().authenticated());
 
         return http.build();
     }
