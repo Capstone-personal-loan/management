@@ -25,13 +25,7 @@ const api = axios.create({ baseURL: BASE_URL });
 // AUTH
 export const registerUser = (data) => api.post("/api/auth/register", data);
 export const loginUser = (email, password) =>
-  api.post(
-    "/api/auth/login",
-    { email, password },
-    {
-      headers: { Authorization: "Basic " + btoa(email + ":" + password) },
-    },
-  );
+  api.post("/api/auth/login", { email, password });
 
 // USER LOANS
 export const applyForLoan = (data) =>

@@ -26,15 +26,17 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> {}) // ✅ ADD THIS LIN
+                .cors(cors -> {
+                })
+                .authenticationProvider(authenticationProvider()) // ✅ important
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/loans/**").hasRole("USER")
-                        .anyRequest().authenticated()
-                )
-                .httpBasic(httpBasic -> {});
+                        .anyRequest().authenticated())
+                .httpBasic(httpBasic -> {
+                });
 
         return http.build();
     }
@@ -62,18 +64,15 @@ public class SecurityConfig {
 
         config.setAllowedOrigins(java.util.List.of(
                 "http://localhost:3000",
-                "https://Capstone-personal-loan.github.io"
-        ));
+                "https://capstone-personal-loan.github.io"));
 
         config.setAllowedMethods(java.util.List.of(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS"
-        ));
+                "GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
         config.setAllowedHeaders(java.util.List.of("*"));
         config.setAllowCredentials(true);
 
-        org.springframework.web.cors.UrlBasedCorsConfigurationSource source =
-                new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+        org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
 
         source.registerCorsConfiguration("/**", config);
 
