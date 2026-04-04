@@ -33,9 +33,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/loans/**").permitAll()
-                        .requestMatchers("/api/admin/**").permitAll()
-                        .anyRequest().authenticated());
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/loans/**").hasRole("USER")
+                        .anyRequest().authenticated())
+
+                .httpBasic(httpBasic -> {
+                });
 
         return http.build();
     }
