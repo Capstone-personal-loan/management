@@ -1,27 +1,56 @@
-import { useState, useEffect } from 'react';
-import { getMyApplications, applyForLoan, getEmiSchedule, getLoanAccount, makePayment, getPaymentHistory } from '../services/api';
+import { useState, useEffect } from "react";
+import {
+  getMyApplications,
+  applyForLoan,
+  getEmiSchedule,
+  getLoanAccount,
+  makePayment,
+  getPaymentHistory,
+} from "../services/api";
 
 function ApplyModal({ onClose, onSuccess }) {
-  const [form, setForm] = useState({ monthlyIncome: '', requestedAmount: '', tenureMonths: '', purpose: '' });
-  const [error, setError] = useState('');
+  const [form, setForm] = useState({
+    monthlyIncome: "",
+    requestedAmount: "",
+    tenureMonths: "",
+    purpose: "",
+  });
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handle = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const submit = async () => {
-    setError(''); setLoading(true);
+    setError("");
+
+    if (
+      !form.monthlyIncome ||
+      !form.requestedAmount ||
+      !form.tenureMonths ||
+      !form.purpose
+    ) {
+      setError("Please fill all fields");
+      return;
+    }
+
+    setLoading(true);
+
     try {
       await applyForLoan({
         monthlyIncome: parseFloat(form.monthlyIncome),
         requestedAmount: parseFloat(form.requestedAmount),
         tenureMonths: parseInt(form.tenureMonths),
-        purpose: form.purpose
+        purpose: form.purpose,
       });
+
       onSuccess();
       onClose();
     } catch (err) {
-      setError(err.response?.data || 'Application failed');
-    } finally { setLoading(false); }
+      console.log("FULL ERROR:", err.response);
+      setError(err.response?.data || "Application failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,21 +58,45 @@ function ApplyModal({ onClose, onSuccess }) {
       <div className="modal">
         <div className="modal-header">
           <h3>Apply for Loan</h3>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <button className="modal-close" onClick={onClose}>
+            ✕
+          </button>
         </div>
-        {error && <div className="error-msg" style={{marginBottom:'16px'}}>{error}</div>}
+        {error && (
+          <div className="error-msg" style={{ marginBottom: "16px" }}>
+            {error}
+          </div>
+        )}
         <div className="form-grid">
           <div className="form-group">
             <label>Monthly Income (₹)</label>
-            <input name="monthlyIncome" type="number" placeholder="75000" value={form.monthlyIncome} onChange={handle} />
+            <input
+              name="monthlyIncome"
+              type="number"
+              placeholder="75000"
+              value={form.monthlyIncome}
+              onChange={handle}
+            />
           </div>
           <div className="form-group">
             <label>Loan Amount (₹)</label>
-            <input name="requestedAmount" type="number" placeholder="500000" value={form.requestedAmount} onChange={handle} />
+            <input
+              name="requestedAmount"
+              type="number"
+              placeholder="500000"
+              value={form.requestedAmount}
+              onChange={handle}
+            />
           </div>
           <div className="form-group">
             <label>Tenure (Months)</label>
-            <input name="tenureMonths" type="number" placeholder="24" value={form.tenureMonths} onChange={handle} />
+            <input
+              name="tenureMonths"
+              type="number"
+              placeholder="24"
+              value={form.tenureMonths}
+              onChange={handle}
+            />
           </div>
           <div className="form-group">
             <label>Purpose</label>
@@ -59,12 +112,30 @@ function ApplyModal({ onClose, onSuccess }) {
             </select>
           </div>
         </div>
-        <div style={{marginTop:'8px', padding:'12px', background:'#faf8f3', borderRadius:'8px', fontSize:'0.8rem', color:'#7a7065'}}>
-          <strong>Eligibility:</strong> Min income ₹15,000 · Max loan 10× income · EMI ≤ 50% income · Tenure 6–60 months
+        <div
+          style={{
+            marginTop: "8px",
+            padding: "12px",
+            background: "#faf8f3",
+            borderRadius: "8px",
+            fontSize: "0.8rem",
+            color: "#7a7065",
+          }}
+        >
+          <strong>Eligibility:</strong> Min income ₹15,000 · Max loan 10× income
+          · EMI ≤ 50% income · Tenure 6–60 months
         </div>
-        <div style={{display:'flex', gap:'12px', marginTop:'24px'}}>
-          <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={submit} disabled={loading}>{loading ? 'Submitting...' : 'Submit Application'}</button>
+        <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
+          <button className="btn btn-outline" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={submit}
+            disabled={loading}
+          >
+            {loading ? "Submitting..." : "Submit Application"}
+          </button>
         </div>
       </div>
     </div>
@@ -75,10 +146,10 @@ function EmiModal({ application, onClose }) {
   const [emis, setEmis] = useState([]);
   const [account, setAccount] = useState(null);
   const [history, setHistory] = useState([]);
-  const [tab, setTab] = useState('schedule');
+  const [tab, setTab] = useState("schedule");
   const [loading, setLoading] = useState(true);
   const [payLoading, setPayLoading] = useState(false);
-  const [payError, setPayError] = useState('');
+  const [payError, setPayError] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -86,48 +157,77 @@ function EmiModal({ application, onClose }) {
         const [emiRes, accRes, histRes] = await Promise.all([
           getEmiSchedule(application.id),
           getLoanAccount(application.id),
-          getPaymentHistory(application.id)
+          getPaymentHistory(application.id),
         ]);
         setEmis(emiRes.data);
         setAccount(accRes.data);
         setHistory(histRes.data);
-      } catch (e) { } finally { setLoading(false); }
+      } catch (e) {
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, [application.id]);
 
   const pay = async (emi) => {
-    setPayError(''); setPayLoading(true);
+    setPayError("");
+    setPayLoading(true);
     try {
-      await makePayment({ emiScheduleId: emi.id, paidAmount: emi.emiAmount, remarks: 'Paid via LoanSphere' });
+      await makePayment({
+        emiScheduleId: emi.id,
+        paidAmount: emi.emiAmount,
+        remarks: "Paid via LoanSphere",
+      });
       const [emiRes, accRes, histRes] = await Promise.all([
-        getEmiSchedule(application.id), getLoanAccount(application.id), getPaymentHistory(application.id)
+        getEmiSchedule(application.id),
+        getLoanAccount(application.id),
+        getPaymentHistory(application.id),
       ]);
-      setEmis(emiRes.data); setAccount(accRes.data); setHistory(histRes.data);
-    } catch (e) { setPayError('Payment failed. Try again.'); } finally { setPayLoading(false); }
+      setEmis(emiRes.data);
+      setAccount(accRes.data);
+      setHistory(histRes.data);
+    } catch (e) {
+      setPayError("Payment failed. Try again.");
+    } finally {
+      setPayLoading(false);
+    }
   };
 
-  const fmt = (n) => n ? '₹' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '₹0';
+  const fmt = (n) =>
+    n
+      ? "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 })
+      : "₹0";
 
   return (
     <div className="modal-overlay">
-      <div className="modal" style={{maxWidth:'700px'}}>
+      <div className="modal" style={{ maxWidth: "700px" }}>
         <div className="modal-header">
           <h3>Loan Details — #{application.id}</h3>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <button className="modal-close" onClick={onClose}>
+            ✕
+          </button>
         </div>
 
-        {loading ? <div className="loading"><div className="spinner"></div></div> : (
+        {loading ? (
+          <div className="loading">
+            <div className="spinner"></div>
+          </div>
+        ) : (
           <>
             {account && (
               <div className="emi-summary">
                 <div className="emi-summary-item">
                   <div className="label">Outstanding</div>
-                  <div className="value" style={{color:'#c44b2b'}}>{fmt(account.outstandingBalance)}</div>
+                  <div className="value" style={{ color: "#c44b2b" }}>
+                    {fmt(account.outstandingBalance)}
+                  </div>
                 </div>
                 <div className="emi-summary-item">
                   <div className="label">Monthly EMI</div>
-                  <div className="value" style={{color:'#3d6b55'}}>{fmt(account.emiAmount)}</div>
+                  <div className="value" style={{ color: "#3d6b55" }}>
+                    {fmt(account.emiAmount)}
+                  </div>
                 </div>
                 <div className="emi-summary-item">
                   <div className="label">Total Payable</div>
@@ -137,13 +237,27 @@ function EmiModal({ application, onClose }) {
             )}
 
             <div className="tabs">
-              <button className={`tab ${tab==='schedule'?'active':''}`} onClick={() => setTab('schedule')}>EMI Schedule</button>
-              <button className={`tab ${tab==='history'?'active':''}`} onClick={() => setTab('history')}>Payment History</button>
+              <button
+                className={`tab ${tab === "schedule" ? "active" : ""}`}
+                onClick={() => setTab("schedule")}
+              >
+                EMI Schedule
+              </button>
+              <button
+                className={`tab ${tab === "history" ? "active" : ""}`}
+                onClick={() => setTab("history")}
+              >
+                Payment History
+              </button>
             </div>
 
-            {payError && <div className="error-msg" style={{marginBottom:'12px'}}>{payError}</div>}
+            {payError && (
+              <div className="error-msg" style={{ marginBottom: "12px" }}>
+                {payError}
+              </div>
+            )}
 
-            {tab === 'schedule' && (
+            {tab === "schedule" && (
               <div className="table-wrapper">
                 <table>
                   <thead>
@@ -158,17 +272,31 @@ function EmiModal({ application, onClose }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {emis.map(e => (
+                    {emis.map((e) => (
                       <tr key={e.id}>
                         <td>{e.installmentNumber}</td>
                         <td>{e.dueDate}</td>
                         <td>{fmt(e.emiAmount)}</td>
                         <td>{fmt(e.principalComponent)}</td>
                         <td>{fmt(e.interestComponent)}</td>
-                        <td><span className={`badge badge-${e.status?.toLowerCase()}`}>{e.status}</span></td>
                         <td>
-                          {e.status === 'PENDING' && (
-                            <button className="btn btn-success" style={{padding:'6px 14px', fontSize:'0.78rem'}} onClick={() => pay(e)} disabled={payLoading}>
+                          <span
+                            className={`badge badge-${e.status?.toLowerCase()}`}
+                          >
+                            {e.status}
+                          </span>
+                        </td>
+                        <td>
+                          {e.status === "PENDING" && (
+                            <button
+                              className="btn btn-success"
+                              style={{
+                                padding: "6px 14px",
+                                fontSize: "0.78rem",
+                              }}
+                              onClick={() => pay(e)}
+                              disabled={payLoading}
+                            >
                               Pay
                             </button>
                           )}
@@ -180,8 +308,8 @@ function EmiModal({ application, onClose }) {
               </div>
             )}
 
-            {tab === 'history' && (
-              history.length === 0 ? (
+            {tab === "history" &&
+              (history.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-icon">💸</div>
                   <h3>No payments yet</h3>
@@ -199,19 +327,20 @@ function EmiModal({ application, onClose }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {history.map(h => (
+                      {history.map((h) => (
                         <tr key={h.id}>
                           <td>#{h.installmentNumber}</td>
                           <td>{fmt(h.paidAmount)}</td>
-                          <td>{new Date(h.paidAt).toLocaleDateString('en-IN')}</td>
+                          <td>
+                            {new Date(h.paidAt).toLocaleDateString("en-IN")}
+                          </td>
                           <td>{h.remarks}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              )
-            )}
+              ))}
           </>
         )}
       </div>
@@ -230,28 +359,52 @@ export default function UserDashboard() {
     try {
       const res = await getMyApplications();
       setApplications(res.data);
-    } catch (e) {} finally { setLoading(false); }
+    } catch (e) {
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
-  const fmt = (n) => '₹' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  const fmt = (n) =>
+    "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
   const total = applications.length;
-  const approved = applications.filter(a => a.status === 'APPROVED').length;
-  const pending = applications.filter(a => a.status === 'PENDING').length;
-  const totalBorrowed = applications.filter(a => a.status === 'APPROVED').reduce((s, a) => s + a.requestedAmount, 0);
+  const approved = applications.filter((a) => a.status === "APPROVED").length;
+  const pending = applications.filter((a) => a.status === "PENDING").length;
+  const totalBorrowed = applications
+    .filter((a) => a.status === "APPROVED")
+    .reduce((s, a) => s + a.requestedAmount, 0);
 
   return (
     <>
-      {showApply && <ApplyModal onClose={() => setShowApply(false)} onSuccess={load} />}
-      {selectedApp && <EmiModal application={selectedApp} onClose={() => setSelectedApp(null)} />}
+      {showApply && (
+        <ApplyModal onClose={() => setShowApply(false)} onSuccess={load} />
+      )}
+      {selectedApp && (
+        <EmiModal
+          application={selectedApp}
+          onClose={() => setSelectedApp(null)}
+        />
+      )}
 
-      <div className="page-header" style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+      <div
+        className="page-header"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+        }}
+      >
         <div>
           <h2>My Loans</h2>
           <p>Track your applications, EMI schedules, and repayments</p>
         </div>
-        <button className="btn btn-gold" onClick={() => setShowApply(true)}>+ Apply for Loan</button>
+        <button className="btn btn-gold" onClick={() => setShowApply(true)}>
+          + Apply for Loan
+        </button>
       </div>
 
       <div className="card-grid">
@@ -272,15 +425,21 @@ export default function UserDashboard() {
         </div>
         <div className="stat-card ink">
           <div className="stat-label">Total Borrowed</div>
-          <div className="stat-value" style={{fontSize:'1.5rem'}}>{fmt(totalBorrowed)}</div>
+          <div className="stat-value" style={{ fontSize: "1.5rem" }}>
+            {fmt(totalBorrowed)}
+          </div>
           <div className="stat-sub">Approved loans</div>
         </div>
       </div>
 
       <div className="card">
-        <h3 style={{marginBottom:'20px', fontSize:'1.2rem'}}>Application History</h3>
+        <h3 style={{ marginBottom: "20px", fontSize: "1.2rem" }}>
+          Application History
+        </h3>
         {loading ? (
-          <div className="loading"><div className="spinner"></div></div>
+          <div className="loading">
+            <div className="spinner"></div>
+          </div>
         ) : applications.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📋</div>
@@ -303,23 +462,41 @@ export default function UserDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {applications.map(app => (
+                {applications.map((app) => (
                   <tr key={app.id}>
                     <td>#{app.id}</td>
                     <td>{app.purpose}</td>
                     <td>{fmt(app.requestedAmount)}</td>
                     <td>{fmt(app.monthlyIncome)}/mo</td>
                     <td>{app.tenureMonths} mo</td>
-                    <td>{new Date(app.appliedAt).toLocaleDateString('en-IN')}</td>
                     <td>
-                      <span className={`badge badge-${app.status?.toLowerCase()}`}>{app.status}</span>
-                      {app.status === 'REJECTED' && app.rejectionReason && (
-                        <div style={{fontSize:'0.72rem', color:'#842029', marginTop:'4px'}}>{app.rejectionReason}</div>
+                      {new Date(app.appliedAt).toLocaleDateString("en-IN")}
+                    </td>
+                    <td>
+                      <span
+                        className={`badge badge-${app.status?.toLowerCase()}`}
+                      >
+                        {app.status}
+                      </span>
+                      {app.status === "REJECTED" && app.rejectionReason && (
+                        <div
+                          style={{
+                            fontSize: "0.72rem",
+                            color: "#842029",
+                            marginTop: "4px",
+                          }}
+                        >
+                          {app.rejectionReason}
+                        </div>
                       )}
                     </td>
                     <td>
-                      {app.status === 'APPROVED' && (
-                        <button className="btn btn-outline" style={{padding:'6px 14px', fontSize:'0.78rem'}} onClick={() => setSelectedApp(app)}>
+                      {app.status === "APPROVED" && (
+                        <button
+                          className="btn btn-outline"
+                          style={{ padding: "6px 14px", fontSize: "0.78rem" }}
+                          onClick={() => setSelectedApp(app)}
+                        >
                           View EMI
                         </button>
                       )}
