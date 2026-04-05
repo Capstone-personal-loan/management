@@ -102,7 +102,7 @@ Follow these steps to walk through the full loan lifecycle from application to E
 1. Register a **new account** with a different email
 2. Log in — the system will detect admin privileges and redirect you to the **Admin Dashboard**
 
-> Note: Admin access is determined by the backend role assigned to the account. Use credentials that have been pre-configured with admin privileges on the backend.
+
 
 ### Step 4 — Review the Application
 
@@ -157,6 +157,3 @@ src/
 
 ---
 
-## License
-
-This project was built as a capstone submission and is intended for educational purposes.
