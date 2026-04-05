@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { loginUser, registerUser } from "../services/api";
+import "../styles/AuthPage.css";
 
 export default function AuthPage({ onLogin }) {
   const [mode, setMode] = useState("login");
@@ -15,21 +16,18 @@ export default function AuthPage({ onLogin }) {
 
   const handle = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
+  // ── all logic untouched ──
   const submit = async () => {
     setError("");
     setLoading(true);
     try {
       if (mode === "login") {
         await loginUser(form.email, form.password);
-
-        // fetch role by registering a check — we store it after login
         const stored = {
           email: form.email,
           password: form.password,
           name: form.email.split("@")[0],
         };
-        // Try to detect role from backend response or default to USER
-        // We will detect it from the response message
         onLogin(stored);
       } else {
         await registerUser(form);
@@ -47,137 +45,193 @@ export default function AuthPage({ onLogin }) {
     }
   };
 
+  const switchMode = () => {
+    setError("");
+    setForm({ name: "", email: "", password: "", phone: "", role: "USER" });
+    setMode(mode === "login" ? "register" : "login");
+  };
+
   return (
-    <div className="auth-page">
-      <div className="auth-left">
-        <div className="auth-brand">
-          <h1>LoanSphere</h1>
-          <p>Personal Loan Management</p>
-        </div>
-        <div className="auth-tagline">
-          <h2>Financial freedom, one step at a time.</h2>
-          <p>
-            Apply for personal loans, track your EMIs, and manage repayments —
-            all in one elegant platform.
-          </p>
-        </div>
-        <div className="auth-features">
-          <div className="auth-feature">
-            <div className="auth-feature-icon">💼</div>
-            <span>Quick loan applications with instant eligibility check</span>
+    <div className="auth-root">
+      {/* ── LEFT: photo panel ── */}
+      <div className="auth-image-panel">
+        <div className="auth-image-bg" />
+        <div className="auth-image-overlay" />
+        <div className="auth-image-content">
+          {/* logo top-left */}
+          <div className="auth-logo">
+            <div className="auth-logo-mark">
+              <img
+                src="https://img.icons8.com/fluency/48/bank-building.png"
+                width="24"
+                height="24"
+                alt="logo"
+              />
+            </div>
+            <span className="auth-logo-name">LoanSphere</span>
           </div>
-          <div className="auth-feature">
-            <div className="auth-feature-icon">📊</div>
-            <span>
-              Detailed EMI schedules with principal & interest breakdown
-            </span>
-          </div>
-          <div className="auth-feature">
-            <div className="auth-feature-icon">✅</div>
-            <span>Real-time repayment tracking and payment history</span>
+
+          {/* bottom text */}
+          <div>
+            <h1 className="auth-image-headline">
+              Your financial
+              <br />
+              freedom starts here
+            </h1>
+            <p className="auth-image-sub">
+              Apply for personal loans, track your EMIs,
+              <br />
+              and manage repayments in one place.
+            </p>
+            <div className="auth-dots">
+              <div className="auth-dot active" />
+              <div className="auth-dot" />
+              <div className="auth-dot" />
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="auth-right">
-        <div className="auth-form-container">
-          <h2>{mode === "login" ? "Welcome back" : "Create account"}</h2>
-          <p>
-            {mode === "login"
-              ? "Sign in to your LoanSphere account"
-              : "Start your loan journey today"}
-          </p>
+      {/* ── RIGHT: form panel ── */}
+      <div className="auth-form-panel">
+        {/* topbar with switch button */}
+        <div className="auth-topbar">
+          <button className="auth-topbar-btn" onClick={switchMode}>
+            {mode === "login" ? "Register" : "Sign in"}
+          </button>
+        </div>
 
-          {error && (
-            <div className="error-msg" style={{ marginBottom: "16px" }}>
-              {error}
-            </div>
-          )}
+        <div className="auth-form-center">
+          <div className="auth-form-box">
+            <h2 className="auth-form-title">
+              {mode === "login" ? "Welcome Back!" : "Create your account"}
+            </h2>
+            <p className="auth-form-subtitle">
+              {mode === "login"
+                ? "Sign in to your account"
+                : "Fill in the details to get started"}
+            </p>
 
-          <div className="auth-form">
-            {mode === "register" && (
-              <>
-                <div className="form-group">
-                  <label>Full Name</label>
-                  <input
-                    name="name"
-                    placeholder="Rahul Sharma"
-                    value={form.name}
-                    onChange={handle}
-                  />
+            {error && <div className="auth-error">{error}</div>}
+
+            <div className="auth-fields">
+              {mode === "register" && (
+                <div className="auth-field-row">
+                  <div className="auth-field">
+                    <label>Full Name</label>
+                    <input
+                      name="name"
+                      placeholder="Rahul Sharma"
+                      value={form.name}
+                      onChange={handle}
+                    />
+                  </div>
+                  <div className="auth-field">
+                    <label>Phone</label>
+                    <input
+                      name="phone"
+                      placeholder="9876543210"
+                      value={form.phone}
+                      onChange={handle}
+                    />
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label>Phone Number</label>
-                  <input
-                    name="phone"
-                    placeholder="9876543210"
-                    value={form.phone}
-                    onChange={handle}
-                  />
-                </div>
-              </>
-            )}
-            <div className="form-group">
-              <label>Email Address</label>
-              <input
-                name="email"
-                type="email"
-                placeholder="rahul@gmail.com"
-                value={form.email}
-                onChange={handle}
-              />
-            </div>
-            <div className="form-group">
-              <label>Password</label>
-              <input
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                value={form.password}
-                onChange={handle}
-              />
-            </div>
-            {mode === "register" && (
-              <div className="form-group">
-                <label>Account Type</label>
-                <select name="role" value={form.role} onChange={handle}>
-                  <option value="USER">User — Apply for loans</option>
-                  <option value="ADMIN">Admin — Manage applications</option>
-                </select>
+              )}
+
+              <div className="auth-field">
+                <label>Your Email</label>
+                <input
+                  name="email"
+                  type="email"
+                  placeholder="rahul@gmail.com"
+                  value={form.email}
+                  onChange={handle}
+                />
               </div>
-            )}
-            <button
-              className="btn btn-primary"
-              style={{
-                width: "100%",
-                justifyContent: "center",
-                padding: "14px",
-              }}
-              onClick={submit}
-              disabled={loading}
-            >
-              {loading
-                ? "Please wait..."
-                : mode === "login"
-                  ? "→  Sign In"
-                  : "→  Create Account"}
-            </button>
-          </div>
 
-          <div className="auth-switch">
-            {mode === "login" ? (
-              <p>
-                Don't have an account?{" "}
-                <button onClick={() => setMode("register")}>
-                  Register here
-                </button>
-              </p>
-            ) : (
-              <p>
-                Already have an account?{" "}
-                <button onClick={() => setMode("login")}>Sign in</button>
-              </p>
-            )}
+              <div className="auth-field">
+                <label>Password</label>
+                <input
+                  name="password"
+                  type="password"
+                  placeholder="••••••••••"
+                  value={form.password}
+                  onChange={handle}
+                />
+              </div>
+
+              {mode === "register" && (
+                <div className="auth-field">
+                  <label>Account Type</label>
+                  <div className="role-cards">
+                    <div
+                      className={`role-card ${form.role === "USER" ? "selected" : ""}`}
+                      onClick={() => setForm({ ...form, role: "USER" })}
+                    >
+                      <div className="role-card-icon">
+                        <img
+                          src="https://img.icons8.com/fluency/48/user-male-circle.png"
+                          width="24"
+                          height="24"
+                          alt="user"
+                        />
+                      </div>
+                      <div className="role-card-title">User</div>
+                      <div className="role-card-desc">Apply for loans</div>
+                    </div>
+                    <div
+                      className={`role-card ${form.role === "ADMIN" ? "selected" : ""}`}
+                      onClick={() => setForm({ ...form, role: "ADMIN" })}
+                    >
+                      <div className="role-card-icon">
+                        <img
+                          src="https://img.icons8.com/fluency/48/admin-settings-male.png"
+                          width="24"
+                          height="24"
+                          alt="admin"
+                        />
+                      </div>
+                      <div className="role-card-title">Admin</div>
+                      <div className="role-card-desc">Manage applications</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <button
+                className="auth-submit-btn"
+                onClick={submit}
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="loading-dots">
+                    <span />
+                    <span />
+                    <span />
+                  </span>
+                ) : mode === "login" ? (
+                  "Login"
+                ) : (
+                  "Create Account"
+                )}
+              </button>
+            </div>
+
+            <div className="auth-divider">
+              <div className="auth-divider-line" />
+              <span className="auth-divider-text">
+                {mode === "login"
+                  ? "Don't have an account?"
+                  : "Already have an account?"}
+              </span>
+              <div className="auth-divider-line" />
+            </div>
+
+            <div className="auth-switch-row">
+              <button className="auth-switch-btn" onClick={switchMode}>
+                {mode === "login" ? "Register" : "Sign in"}
+              </button>
+            </div>
           </div>
         </div>
       </div>

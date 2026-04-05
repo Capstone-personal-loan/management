@@ -1,4 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import {
+  LayoutDashboard,
+  Plus,
+  Bell,
+  Settings,
+  LogOut,
+  FileText,
+  CircleDollarSign,
+  CheckCircle2,
+  Clock3,
+  X,
+  IndianRupee,
+  Landmark,
+  TrendingUp,
+  ShieldCheck,
+  Info,
+} from "lucide-react";
 import {
   getMyApplications,
   applyForLoan,
@@ -7,7 +24,20 @@ import {
   makePayment,
   getPaymentHistory,
 } from "../services/api";
+import "../styles/UserDashboard.css";
 
+const fmt = (n) =>
+  n != null
+    ? "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+    : "₹0";
+const fmt2 = (n) =>
+  n != null
+    ? "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 })
+    : "₹0";
+
+/* ════════════════════════════════
+   APPLY MODAL
+════════════════════════════════ */
 function ApplyModal({ onClose, onSuccess }) {
   const [form, setForm] = useState({
     monthlyIncome: "",
@@ -17,12 +47,10 @@ function ApplyModal({ onClose, onSuccess }) {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const handle = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const h = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const submit = async () => {
     setError("");
-
     if (
       !form.monthlyIncome ||
       !form.requestedAmount ||
@@ -32,9 +60,7 @@ function ApplyModal({ onClose, onSuccess }) {
       setError("Please fill all fields");
       return;
     }
-
     setLoading(true);
-
     try {
       await applyForLoan({
         monthlyIncome: parseFloat(form.monthlyIncome),
@@ -42,11 +68,9 @@ function ApplyModal({ onClose, onSuccess }) {
         tenureMonths: parseInt(form.tenureMonths),
         purpose: form.purpose,
       });
-
       onSuccess();
       onClose();
     } catch (err) {
-      console.log("FULL ERROR:", err.response);
       setError(err.response?.data || "Application failed");
     } finally {
       setLoading(false);
@@ -54,86 +78,70 @@ function ApplyModal({ onClose, onSuccess }) {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal">
-        <div className="modal-header">
-          <h3>Apply for Loan</h3>
-          <button className="modal-close" onClick={onClose}>
-            ✕
+    <div className="ud-overlay">
+      <div className="ud-modal">
+        <div className="ud-modal-head">
+          <h3>New Loan Application</h3>
+          <button className="ud-modal-close" onClick={onClose}>
+            <X size={12} />
           </button>
         </div>
-        {error && (
-          <div className="error-msg" style={{ marginBottom: "16px" }}>
-            {error}
-          </div>
-        )}
-        <div className="form-grid">
-          <div className="form-group">
+        {error && <div className="ud-error">{error}</div>}
+        <div className="ud-form-grid">
+          <div className="ud-fg">
             <label>Monthly Income (₹)</label>
             <input
               name="monthlyIncome"
               type="number"
-              placeholder="75000"
+              placeholder="75,000"
               value={form.monthlyIncome}
-              onChange={handle}
+              onChange={h}
             />
           </div>
-          <div className="form-group">
+          <div className="ud-fg">
             <label>Loan Amount (₹)</label>
             <input
               name="requestedAmount"
               type="number"
-              placeholder="500000"
+              placeholder="5,00,000"
               value={form.requestedAmount}
-              onChange={handle}
+              onChange={h}
             />
           </div>
-          <div className="form-group">
+          <div className="ud-fg">
             <label>Tenure (Months)</label>
             <input
               name="tenureMonths"
               type="number"
               placeholder="24"
               value={form.tenureMonths}
-              onChange={handle}
+              onChange={h}
             />
           </div>
-          <div className="form-group">
+          <div className="ud-fg">
             <label>Purpose</label>
-            <select name="purpose" value={form.purpose} onChange={handle}>
+            <select name="purpose" value={form.purpose} onChange={h}>
               <option value="">Select purpose</option>
-              <option value="Home Renovation">Home Renovation</option>
-              <option value="Wedding Expenses">Wedding Expenses</option>
-              <option value="Medical Emergency">Medical Emergency</option>
-              <option value="Education">Education</option>
-              <option value="Business">Business</option>
-              <option value="Travel">Travel</option>
-              <option value="Other">Other</option>
+              <option>Home Renovation</option>
+              <option>Wedding Expenses</option>
+              <option>Medical Emergency</option>
+              <option>Education</option>
+              <option>Business</option>
+              <option>Travel</option>
+              <option>Other</option>
             </select>
           </div>
         </div>
-        <div
-          style={{
-            marginTop: "8px",
-            padding: "12px",
-            background: "#faf8f3",
-            borderRadius: "8px",
-            fontSize: "0.8rem",
-            color: "#7a7065",
-          }}
-        >
-          <strong>Eligibility:</strong> Min income ₹15,000 · Max loan 10× income
-          · EMI ≤ 50% income · Tenure 6–60 months
+        <div className="ud-hint">
+          <strong>Eligibility —</strong> Min income ₹15,000 &nbsp;·&nbsp; Max
+          loan 10× income &nbsp;·&nbsp; EMI ≤ 50% income &nbsp;·&nbsp; Tenure
+          6–60 months &nbsp;·&nbsp; 12% p.a.
         </div>
-        <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
-          <button className="btn btn-outline" onClick={onClose}>
+        <div className="ud-modal-actions">
+          <button className="ud-btn-cancel" onClick={onClose}>
             Cancel
           </button>
-          <button
-            className="btn btn-primary"
-            onClick={submit}
-            disabled={loading}
-          >
+          <button className="ud-btn-submit" onClick={submit} disabled={loading}>
             {loading ? "Submitting..." : "Submit Application"}
           </button>
         </div>
@@ -142,124 +150,116 @@ function ApplyModal({ onClose, onSuccess }) {
   );
 }
 
+/* ════════════════════════════════
+   EMI MODAL
+════════════════════════════════ */
 function EmiModal({ application, onClose }) {
   const [emis, setEmis] = useState([]);
   const [account, setAccount] = useState(null);
   const [history, setHistory] = useState([]);
   const [tab, setTab] = useState("schedule");
   const [loading, setLoading] = useState(true);
-  const [payLoading, setPayLoading] = useState(false);
-  const [payError, setPayError] = useState("");
+  const [payLoad, setPayLoad] = useState(false);
+  const [payErr, setPayErr] = useState("");
+
+  const load = async () => {
+    try {
+      const [e, a, h] = await Promise.all([
+        getEmiSchedule(application.id),
+        getLoanAccount(application.id),
+        getPaymentHistory(application.id),
+      ]);
+      setEmis(e.data);
+      setAccount(a.data);
+      setHistory(h.data);
+    } catch (_) {
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [emiRes, accRes, histRes] = await Promise.all([
-          getEmiSchedule(application.id),
-          getLoanAccount(application.id),
-          getPaymentHistory(application.id),
-        ]);
-        setEmis(emiRes.data);
-        setAccount(accRes.data);
-        setHistory(histRes.data);
-      } catch (e) {
-      } finally {
-        setLoading(false);
-      }
-    };
     load();
   }, [application.id]);
 
   const pay = async (emi) => {
-    setPayError("");
-    setPayLoading(true);
+    setPayErr("");
+    setPayLoad(true);
     try {
       await makePayment({
         emiScheduleId: emi.id,
         paidAmount: emi.emiAmount,
         remarks: "Paid via LoanSphere",
       });
-      const [emiRes, accRes, histRes] = await Promise.all([
-        getEmiSchedule(application.id),
-        getLoanAccount(application.id),
-        getPaymentHistory(application.id),
-      ]);
-      setEmis(emiRes.data);
-      setAccount(accRes.data);
-      setHistory(histRes.data);
-    } catch (e) {
-      setPayError("Payment failed. Try again.");
+      await load();
+    } catch (_) {
+      setPayErr("Payment failed. Try again.");
     } finally {
-      setPayLoading(false);
+      setPayLoad(false);
     }
   };
 
-  const fmt = (n) =>
-    n
-      ? "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 })
-      : "₹0";
-
   return (
-    <div className="modal-overlay">
-      <div className="modal" style={{ maxWidth: "700px" }}>
-        <div className="modal-header">
-          <h3>Loan Details — #{application.id}</h3>
-          <button className="modal-close" onClick={onClose}>
-            ✕
+    <div className="ud-overlay">
+      <div className="ud-modal lg">
+        <div className="ud-modal-head">
+          <h3>
+            Loan #{application.id} — {application.purpose}
+          </h3>
+          <button className="ud-modal-close" onClick={onClose}>
+            <X size={12} />
           </button>
         </div>
 
         {loading ? (
-          <div className="loading">
-            <div className="spinner"></div>
+          <div className="ud-spinner-wrap">
+            <div className="ud-spinner" />
           </div>
         ) : (
           <>
             {account && (
-              <div className="emi-summary">
-                <div className="emi-summary-item">
-                  <div className="label">Outstanding</div>
-                  <div className="value" style={{ color: "#c44b2b" }}>
-                    {fmt(account.outstandingBalance)}
+              <div className="ud-emi-summary">
+                <div className="ud-emi-sum">
+                  <div className="ud-emi-sum-lbl">Outstanding</div>
+                  <div className="ud-emi-sum-val" style={{ color: "#e53e3e" }}>
+                    {fmt2(account.outstandingBalance)}
                   </div>
                 </div>
-                <div className="emi-summary-item">
-                  <div className="label">Monthly EMI</div>
-                  <div className="value" style={{ color: "#3d6b55" }}>
-                    {fmt(account.emiAmount)}
+                <div className="ud-emi-sum">
+                  <div className="ud-emi-sum-lbl">Monthly EMI</div>
+                  <div className="ud-emi-sum-val" style={{ color: "#18a865" }}>
+                    {fmt2(account.emiAmount)}
                   </div>
                 </div>
-                <div className="emi-summary-item">
-                  <div className="label">Total Payable</div>
-                  <div className="value">{fmt(account.totalPayable)}</div>
+                <div className="ud-emi-sum">
+                  <div className="ud-emi-sum-lbl">Total Payable</div>
+                  <div className="ud-emi-sum-val">
+                    {fmt2(account.totalPayable)}
+                  </div>
                 </div>
               </div>
             )}
 
-            <div className="tabs">
+            <div className="ud-tabs">
               <button
-                className={`tab ${tab === "schedule" ? "active" : ""}`}
+                className={`ud-tab ${tab === "schedule" ? "active" : ""}`}
                 onClick={() => setTab("schedule")}
               >
                 EMI Schedule
               </button>
               <button
-                className={`tab ${tab === "history" ? "active" : ""}`}
+                className={`ud-tab ${tab === "history" ? "active" : ""}`}
                 onClick={() => setTab("history")}
               >
                 Payment History
               </button>
             </div>
 
-            {payError && (
-              <div className="error-msg" style={{ marginBottom: "12px" }}>
-                {payError}
-              </div>
-            )}
+            {payErr && <div className="ud-error">{payErr}</div>}
 
             {tab === "schedule" && (
-              <div className="table-wrapper">
-                <table>
+              <div className="ud-table-wrap">
+                <table className="ud-table">
                   <thead>
                     <tr>
                       <th>#</th>
@@ -274,14 +274,14 @@ function EmiModal({ application, onClose }) {
                   <tbody>
                     {emis.map((e) => (
                       <tr key={e.id}>
-                        <td>{e.installmentNumber}</td>
+                        <td className="sm">{e.installmentNumber}</td>
                         <td>{e.dueDate}</td>
-                        <td>{fmt(e.emiAmount)}</td>
-                        <td>{fmt(e.principalComponent)}</td>
-                        <td>{fmt(e.interestComponent)}</td>
+                        <td className="fw">{fmt2(e.emiAmount)}</td>
+                        <td>{fmt2(e.principalComponent)}</td>
+                        <td className="sm">{fmt2(e.interestComponent)}</td>
                         <td>
                           <span
-                            className={`badge badge-${e.status?.toLowerCase()}`}
+                            className={`ud-badge ${e.status?.toLowerCase()}`}
                           >
                             {e.status}
                           </span>
@@ -289,15 +289,11 @@ function EmiModal({ application, onClose }) {
                         <td>
                           {e.status === "PENDING" && (
                             <button
-                              className="btn btn-success"
-                              style={{
-                                padding: "6px 14px",
-                                fontSize: "0.78rem",
-                              }}
+                              className="ud-btn-pay"
                               onClick={() => pay(e)}
-                              disabled={payLoading}
+                              disabled={payLoad}
                             >
-                              Pay
+                              Pay Now
                             </button>
                           )}
                         </td>
@@ -310,14 +306,16 @@ function EmiModal({ application, onClose }) {
 
             {tab === "history" &&
               (history.length === 0 ? (
-                <div className="empty-state">
-                  <div className="empty-icon">💸</div>
+                <div className="ud-empty">
+                  <div className="ud-empty-icon">
+                    <CircleDollarSign size={18} />
+                  </div>
                   <h3>No payments yet</h3>
-                  <p>Your payment history will appear here.</p>
+                  <p>Your payment history will appear here</p>
                 </div>
               ) : (
-                <div className="table-wrapper">
-                  <table>
+                <div className="ud-table-wrap">
+                  <table className="ud-table">
                     <thead>
                       <tr>
                         <th>Installment</th>
@@ -329,12 +327,12 @@ function EmiModal({ application, onClose }) {
                     <tbody>
                       {history.map((h) => (
                         <tr key={h.id}>
-                          <td>#{h.installmentNumber}</td>
-                          <td>{fmt(h.paidAmount)}</td>
+                          <td className="sm">#{h.installmentNumber}</td>
+                          <td className="fw">{fmt2(h.paidAmount)}</td>
                           <td>
                             {new Date(h.paidAt).toLocaleDateString("en-IN")}
                           </td>
-                          <td>{h.remarks}</td>
+                          <td className="sm">{h.remarks}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -348,18 +346,44 @@ function EmiModal({ application, onClose }) {
   );
 }
 
-export default function UserDashboard() {
+/* ════════════════════════════════
+   MAIN DASHBOARD
+════════════════════════════════ */
+export default function UserDashboard({ onLogout }) {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showApply, setShowApply] = useState(false);
   const [selectedApp, setSelectedApp] = useState(null);
+  const rootRef = useRef(null);
+
+  useEffect(() => {
+    const allSidebars = document.querySelectorAll("aside");
+    allSidebars.forEach((el) => {
+      if (!el.classList.contains("ud-sidebar")) {
+        el.style.display = "none";
+      }
+    });
+    const allFixed = document.querySelectorAll(
+      '[style*="position: fixed"], [style*="position:fixed"]',
+    );
+    allFixed.forEach((el) => {
+      if (!el.closest(".ud-root") && !el.closest(".ud-overlay")) {
+        el.style.display = "none";
+      }
+    });
+  }, []);
+
+  const stored = JSON.parse(localStorage.getItem("loanUser") || "{}");
+  const rawName = stored.name || stored.email?.split("@")[0] || "User";
+  const displayName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+  const initials = displayName.slice(0, 2).toUpperCase();
 
   const load = async () => {
     setLoading(true);
     try {
-      const res = await getMyApplications();
-      setApplications(res.data);
-    } catch (e) {
+      const r = await getMyApplications();
+      setApplications(r.data);
+    } catch (_) {
     } finally {
       setLoading(false);
     }
@@ -369,8 +393,6 @@ export default function UserDashboard() {
     load();
   }, []);
 
-  const fmt = (n) =>
-    "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
   const total = applications.length;
   const approved = applications.filter((a) => a.status === "APPROVED").length;
   const pending = applications.filter((a) => a.status === "PENDING").length;
@@ -379,7 +401,276 @@ export default function UserDashboard() {
     .reduce((s, a) => s + a.requestedAmount, 0);
 
   return (
-    <>
+    <div className="ud-root" ref={rootRef}>
+      {/* ── SIDEBAR ── */}
+      <aside className="ud-sidebar">
+        {/* Brand */}
+        <div className="ud-brand">
+          <div className="ud-brand-logo">
+            <Landmark size={15} color="#fff" strokeWidth={1.8} />
+          </div>
+          <div className="ud-brand-text">
+            <h2>LoanSphere</h2>
+            <span>User Portal</span>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="ud-nav">
+          <button className="ud-nav-btn active">
+            <LayoutDashboard size={14} />
+            Overview
+          </button>
+        </nav>
+
+        <div className="ud-sidebar-sep" />
+
+        {/* Footer */}
+        <div className="ud-sidebar-bottom">
+          <div className="ud-user-row">
+            <div className="ud-avatar">{initials}</div>
+            <div className="ud-user-meta">
+              <p>{displayName}</p>
+              <span>User Account</span>
+            </div>
+          </div>
+          <button className="ud-signout" onClick={onLogout}>
+            <LogOut size={13} />
+            Sign Out
+          </button>
+        </div>
+      </aside>
+
+      {/* ── MAIN ── */}
+      <div className="ud-main">
+        {/* Topbar */}
+        <header className="ud-topbar">
+          <div className="ud-topbar-title">
+            <h1>Hello, {displayName}</h1>
+            <p>Here's your loan overview</p>
+          </div>
+          <div className="ud-topbar-right">
+            <button className="ud-icon-btn" title="Notifications">
+              <Bell size={14} />
+            </button>
+            <button className="ud-icon-btn" title="Settings">
+              <Settings size={14} />
+            </button>
+            <button
+              className="ud-new-loan-btn"
+              onClick={() => setShowApply(true)}
+            >
+              <Plus size={13} />
+              New Loan
+            </button>
+          </div>
+        </header>
+
+        {/* Content */}
+        <div className="ud-content">
+          {/* Hero */}
+          <div className="ud-hero">
+            <div className="ud-hero-bg-circle1" />
+            <div className="ud-hero-bg-circle2" />
+            <div className="ud-hero-left">
+              <div className="ud-hero-eyebrow">Total Borrowed</div>
+              <div className="ud-hero-amount">
+                <span className="currency">₹</span>
+                {Number(totalBorrowed).toLocaleString("en-IN")}
+              </div>
+              <div className="ud-hero-tags">
+                <div className="ud-hero-tag">12% p.a.</div>
+                <div className="ud-hero-tag">
+                  {approved} active loan{approved !== 1 ? "s" : ""}
+                </div>
+              </div>
+            </div>
+            <div className="ud-hero-right">
+              <div className="ud-hero-right-label">Pending Review</div>
+              <div className="ud-hero-right-val">{pending}</div>
+              <div className="ud-hero-right-sub">awaiting admin</div>
+            </div>
+          </div>
+
+          {/* Stat Cards */}
+          <div className="ud-stats">
+            <div className="ud-stat-card">
+              <div className="ud-stat-top">
+                <div className="ud-stat-icon green">
+                  <CheckCircle2 size={15} />
+                </div>
+                <span className="ud-stat-pill green">Active</span>
+              </div>
+              <div className="ud-stat-val">{approved}</div>
+              <div className="ud-stat-label">Approved Loans</div>
+            </div>
+            <div className="ud-stat-card">
+              <div className="ud-stat-top">
+                <div className="ud-stat-icon amber">
+                  <Clock3 size={15} />
+                </div>
+                <span className="ud-stat-pill amber">Review</span>
+              </div>
+              <div className="ud-stat-val">{pending}</div>
+              <div className="ud-stat-label">Pending Applications</div>
+            </div>
+            <div className="ud-stat-card">
+              <div className="ud-stat-top">
+                <div className="ud-stat-icon blue">
+                  <FileText size={15} />
+                </div>
+                <span className="ud-stat-pill blue">Total</span>
+              </div>
+              <div className="ud-stat-val">{total}</div>
+              <div className="ud-stat-label">Total Applications</div>
+            </div>
+            <div className="ud-stat-card">
+              <div className="ud-stat-top">
+                <div className="ud-stat-icon violet">
+                  <IndianRupee size={15} />
+                </div>
+                <span className="ud-stat-pill violet">Disbursed</span>
+              </div>
+              <div className="ud-stat-val" style={{ fontSize: "1.15rem" }}>
+                {fmt(totalBorrowed)}
+              </div>
+              <div className="ud-stat-label">Total Disbursed</div>
+            </div>
+          </div>
+
+          {/* Bottom Grid */}
+          <div className="ud-grid">
+            {/* Application History table */}
+            <div className="ud-card">
+              <div className="ud-card-head">
+                <h3>Application History</h3>
+                <button
+                  className="ud-card-head-btn"
+                  onClick={() => setShowApply(true)}
+                >
+                  <Plus size={12} style={{ marginRight: 4 }} />
+                  Apply
+                </button>
+              </div>
+
+              {loading ? (
+                <div className="ud-spinner-wrap">
+                  <div className="ud-spinner" />
+                </div>
+              ) : applications.length === 0 ? (
+                <div className="ud-empty">
+                  <div className="ud-empty-icon">
+                    <FileText size={16} />
+                  </div>
+                  <h3>No applications yet</h3>
+                  <p>Click "New Loan" to get started</p>
+                </div>
+              ) : (
+                <div className="ud-table-wrap">
+                  <table className="ud-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Purpose</th>
+                        <th>Amount</th>
+                        <th>Tenure</th>
+                        <th>Applied</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {applications.map((app) => (
+                        <tr key={app.id}>
+                          <td className="sm">#{app.id}</td>
+                          <td>{app.purpose}</td>
+                          <td className="fw">{fmt(app.requestedAmount)}</td>
+                          <td className="sm">{app.tenureMonths} mo</td>
+                          <td className="sm">
+                            {new Date(app.appliedAt).toLocaleDateString(
+                              "en-IN",
+                            )}
+                          </td>
+                          <td>
+                            <span
+                              className={`ud-badge ${app.status?.toLowerCase()}`}
+                            >
+                              {app.status}
+                            </span>
+                            {app.status === "REJECTED" &&
+                              app.rejectionReason && (
+                                <div
+                                  style={{
+                                    fontSize: "0.63rem",
+                                    color: "#e53e3e",
+                                    marginTop: "3px",
+                                  }}
+                                >
+                                  {app.rejectionReason}
+                                </div>
+                              )}
+                          </td>
+                          <td>
+                            {app.status === "APPROVED" && (
+                              <button
+                                className="ud-view-btn"
+                                onClick={() => setSelectedApp(app)}
+                              >
+                                View EMI
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Right Panel */}
+            <div className="ud-right-panel">
+              <div className="ud-cta-card">
+                <div className="ud-cta-icon">
+                  <TrendingUp size={20} />
+                </div>
+                <h3>Need funds?</h3>
+                <p>
+                  Apply for a personal loan in minutes with instant eligibility
+                  check and quick approval.
+                </p>
+                <button
+                  className="ud-cta-btn"
+                  onClick={() => setShowApply(true)}
+                >
+                  Apply for a Loan
+                </button>
+              </div>
+
+              <div className="ud-info-card">
+                <div className="ud-info-card-head">
+                  <ShieldCheck size={13} style={{ marginRight: 6 }} />
+                  Eligibility Criteria
+                </div>
+                {[
+                  ["Min. Income", "₹15,000 / mo"],
+                  ["Max Loan", "10× income"],
+                  ["EMI Limit", "50% of income"],
+                  ["Tenure", "6 – 60 months"],
+                  ["Interest Rate", "12% p.a."],
+                ].map(([k, v]) => (
+                  <div className="ud-info-row" key={k}>
+                    <span className="k">{k}</span>
+                    <span className="v">{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modals */}
       {showApply && (
         <ApplyModal onClose={() => setShowApply(false)} onSuccess={load} />
       )}
@@ -389,125 +680,6 @@ export default function UserDashboard() {
           onClose={() => setSelectedApp(null)}
         />
       )}
-
-      <div
-        className="page-header"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-        }}
-      >
-        <div>
-          <h2>My Loans</h2>
-          <p>Track your applications, EMI schedules, and repayments</p>
-        </div>
-        <button className="btn btn-gold" onClick={() => setShowApply(true)}>
-          + Apply for Loan
-        </button>
-      </div>
-
-      <div className="card-grid">
-        <div className="stat-card gold">
-          <div className="stat-label">Total Applications</div>
-          <div className="stat-value">{total}</div>
-          <div className="stat-sub">All time</div>
-        </div>
-        <div className="stat-card sage">
-          <div className="stat-label">Approved</div>
-          <div className="stat-value">{approved}</div>
-          <div className="stat-sub">Active loans</div>
-        </div>
-        <div className="stat-card rust">
-          <div className="stat-label">Pending Review</div>
-          <div className="stat-value">{pending}</div>
-          <div className="stat-sub">Awaiting admin</div>
-        </div>
-        <div className="stat-card ink">
-          <div className="stat-label">Total Borrowed</div>
-          <div className="stat-value" style={{ fontSize: "1.5rem" }}>
-            {fmt(totalBorrowed)}
-          </div>
-          <div className="stat-sub">Approved loans</div>
-        </div>
-      </div>
-
-      <div className="card">
-        <h3 style={{ marginBottom: "20px", fontSize: "1.2rem" }}>
-          Application History
-        </h3>
-        {loading ? (
-          <div className="loading">
-            <div className="spinner"></div>
-          </div>
-        ) : applications.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">📋</div>
-            <h3>No applications yet</h3>
-            <p>Click "Apply for Loan" to get started</p>
-          </div>
-        ) : (
-          <div className="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Purpose</th>
-                  <th>Amount</th>
-                  <th>Income</th>
-                  <th>Tenure</th>
-                  <th>Applied On</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {applications.map((app) => (
-                  <tr key={app.id}>
-                    <td>#{app.id}</td>
-                    <td>{app.purpose}</td>
-                    <td>{fmt(app.requestedAmount)}</td>
-                    <td>{fmt(app.monthlyIncome)}/mo</td>
-                    <td>{app.tenureMonths} mo</td>
-                    <td>
-                      {new Date(app.appliedAt).toLocaleDateString("en-IN")}
-                    </td>
-                    <td>
-                      <span
-                        className={`badge badge-${app.status?.toLowerCase()}`}
-                      >
-                        {app.status}
-                      </span>
-                      {app.status === "REJECTED" && app.rejectionReason && (
-                        <div
-                          style={{
-                            fontSize: "0.72rem",
-                            color: "#842029",
-                            marginTop: "4px",
-                          }}
-                        >
-                          {app.rejectionReason}
-                        </div>
-                      )}
-                    </td>
-                    <td>
-                      {app.status === "APPROVED" && (
-                        <button
-                          className="btn btn-outline"
-                          style={{ padding: "6px 14px", fontSize: "0.78rem" }}
-                          onClick={() => setSelectedApp(app)}
-                        >
-                          View EMI
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </>
+    </div>
   );
 }
